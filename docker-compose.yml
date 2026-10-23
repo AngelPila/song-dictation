@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+  api:
+    build: ./api
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - api-cache:/data
+    restart: unless-stopped
+
+volumes:
+  api-cache:

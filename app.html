@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Song Dictation — práctica</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 fill=%22%23ffe927%22/><rect x=%226%22 y=%2219%22 width=%2220%22 height=%225%22 fill=%22%23191919%22/></svg>">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="ui">
+  <!-- Barra superior: marca, las dos pantallas, puntos totales -->
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Song Dictation, inicio">
+      <span class="mark" aria-hidden="true"></span>
+      <span>song dictation</span>
+    </a>
+    <nav class="topnav" aria-label="Pantallas">
+      <a href="#canciones" id="nav-songs" aria-current="page">Canciones</a>
+      <a href="#practica" id="nav-practice" aria-disabled="true">Práctica</a>
+    </nav>
+    <p class="points" title="Puntos de todas las canciones"><span class="num" id="points-total">0</span> <span class="ui-faint">pts</span></p>
+  </header>
+
+  <!-- ============ Canciones ============ -->
+  <main id="setup" class="canvas">
+    <div class="title-row">
+      <div>
+        <h1 class="screen-title" id="home-title">Canciones</h1>
+        <p class="subline" id="home-subline">Buscá una canción en inglés con la letra sincronizada y practicala verso por verso.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="ui-card span-6 hidden" id="recents-card" aria-labelledby="recents-title">
+        <div class="ui-card-head">
+          <h2 class="ui-card-title" id="recents-title">Seguir practicando</h2>
+          <span class="ui-meta" id="recents-count"></span>
+        </div>
+        <ul class="recents" id="recents"></ul>
+      </section>
+
+      <section class="ui-card span-4" aria-labelledby="search-title">
+        <div class="ui-card-head">
+          <h2 class="ui-card-title" id="search-title">Buscar</h2>
+          <span class="ui-meta">Letras de LRCLIB</span>
+        </div>
+        <form id="search-form" class="search">
+          <div>
+            <label class="ui-label" for="q-track">Canción</label>
+            <input class="ui-input" id="q-track" placeholder="Yellow" required autocomplete="off">
+          </div>
+          <div>
+            <label class="ui-label" for="q-artist">Artista</label>
+            <input class="ui-input" id="q-artist" placeholder="Coldplay" autocomplete="off">
+          </div>
+          <button type="submit" class="ui-btn">Buscar</button>
+        </form>
+        <ul id="results" class="results"></ul>
+        <div id="starter" class="starter">
+          <p class="ui-meta starter-title">Para empezar: voces claras y ritmo tranquilo</p>
+          <ul class="results" id="starter-list"></ul>
+        </div>
+      </section>
+
+      <section class="ui-card span-2 prepare" aria-labelledby="prepare-title">
+        <div class="ui-card-head">
+          <h2 class="ui-card-title" id="prepare-title">Preparar</h2>
+        </div>
+        <p class="chosen" id="chosen"><span class="ui-meta">Elegí una canción de la lista.</span></p>
+
+        <div class="video-head">
+          <p class="ui-label">Video de YouTube</p>
+          <span class="ui-meta" id="yt-source"></span>
+        </div>
+        <div id="yt-pick" class="yt-pick hidden" aria-live="polite">
+          <img id="yt-thumb" alt="Miniatura del video elegido" width="320" height="180">
+          <div class="yt-info">
+            <b id="yt-title"></b>
+            <span class="ui-meta" id="yt-meta"></span>
+          </div>
+        </div>
+        <p id="yt-status" class="yt-status" role="status"></p>
+        <div id="yt-alts-wrap" class="hidden">
+          <p class="ui-meta alts-title">Otras opciones</p>
+          <ul id="yt-alts" class="yt-alts"></ul>
+        </div>
+
+        <label class="ui-label" for="yt-url" id="yt-url-label">O pegá un link de YouTube</label>
+        <input class="ui-input" id="yt-url" placeholder="https://youtube.com/watch?v=…" autocomplete="off">
+        <p class="ui-meta field-note">Mejor el audio oficial o un lyric video: los videoclips traen intros que corren los tiempos.</p>
+
+        <p class="ui-label">Dificultad</p>
+        <div id="levels" class="segmented" role="radiogroup" aria-label="Dificultad">
+          <button type="button" class="level" data-level="easy" role="radio">Principiante</button>
+          <button type="button" class="level" data-level="mid" role="radio">Intermedio</button>
+          <button type="button" class="level" data-level="full" role="radio">Avanzado</button>
+        </div>
+        <p class="ui-meta field-note" id="level-note"></p>
+        <p class="level-sample ui-verse" id="level-sample" aria-label="Ejemplo de cómo se ve un verso en este nivel"></p>
+
+        <p id="setup-msg" class="error-msg" role="alert"></p>
+        <button id="start-btn" class="ui-btn primary wide" disabled>Empezar</button>
+      </section>
+    </div>
+  </main>
+
+  <!-- ============ Práctica ============ -->
+  <main id="practice" class="canvas hidden">
+    <!-- El objeto: la canción -->
+    <section class="ui-card object" aria-labelledby="song-title">
+      <img class="cover" id="song-cover" alt="" width="88" height="50">
+      <div class="object-text">
+        <h2 class="screen-title" id="song-title"></h2>
+        <p class="ui-meta" id="song-meta"></p>
+      </div>
+      <div class="object-actions">
+        <button id="back-btn" class="ui-btn">Cambiar canción</button>
+      </div>
+    </section>
+
+    <section class="strip-row" aria-label="Progreso de la canción">
+      <div class="ui-strip" id="strip"></div>
+      <div class="strip-foot">
+        <p class="ui-meta" id="strip-summary"></p>
+        <div class="ui-legend">
+          <span><i class="done"></i>Resuelto</span>
+          <span><i class="partial"></i>A medias</span>
+          <span><i class="revealed"></i>Revelado</span>
+          <span><i></i>Sin hacer</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="practice-grid">
+      <section class="ui-card stage-card" aria-labelledby="verse-label">
+        <div id="work" class="ui-stage">
+          <div class="ui-stage-head">
+            <h2 class="ui-card-title" id="verse-label">Verso <span id="line-num" class="num">1</span> de <span id="line-total" class="num">0</span></h2>
+            <span class="ui-meta num" id="line-time"></span>
+          </div>
+          <p class="finding" id="finding"></p>
+          <div class="ui-listen">
+            <button id="play-btn" class="ui-btn">Escuchar verso</button>
+            <button id="slow-btn" class="ui-btn">Más lento <span class="num ui-faint">0.75×</span></button>
+            <span class="ui-meta shortcut"><kbd class="ui-kbd">Ctrl</kbd> + <kbd class="ui-kbd">Espacio</kbd> repite</span>
+          </div>
+
+          <div id="gap-area" class="ui-verse ui-gaps hidden"></div>
+          <label class="sr-only" for="answer">Lo que escuchaste</label>
+          <textarea id="answer" class="ui-verse" rows="2" placeholder="Escribí lo que escuchás" spellcheck="false" autocapitalize="off"></textarea>
+
+          <div id="feedback" aria-live="polite"></div>
+
+          <div class="ui-actions">
+            <button id="check-btn" class="ui-btn primary">Revisar</button>
+            <button id="hint-btn" class="ui-btn">Pista <span class="cost">−2</span></button>
+            <button id="reveal-btn" class="ui-btn">Ver respuesta <span class="cost">−5</span></button>
+            <span class="spacer"></span>
+            <button id="prev-btn" class="ui-btn text" aria-label="Verso anterior">← Anterior</button>
+            <button id="skip-btn" class="ui-btn text">Saltar <span class="cost">−3</span></button>
+          </div>
+        </div>
+
+        <div id="done" class="done hidden">
+          <h2 class="ui-card-title">Terminaste <span id="done-title"></span></h2>
+          <dl class="ui-kpis done-kpis">
+            <div><dt>Precisión</dt><dd id="done-acc">0<small>%</small></dd></div>
+            <div><dt>Puntos</dt><dd id="done-pts">0</dd></div>
+            <div><dt>Mejor racha</dt><dd id="done-best">0<small>versos</small></dd></div>
+          </dl>
+          <div class="ui-actions">
+            <button id="restart-btn" class="ui-btn primary">Repetir la canción</button>
+            <button id="other-btn" class="ui-btn">Elegir otra</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="ui-card video-card">
+        <div class="player-wrap"><div id="player"></div></div>
+      </div>
+
+      <aside class="side">
+        <div class="ui-card">
+          <dl class="ui-kpis">
+            <div><dt>Precisión</dt><dd><span id="score">0</span><small>%</small></dd></div>
+            <div><dt>Puntos</dt><dd id="song-points">0</dd></div>
+            <div><dt>Racha</dt><dd id="combo">0</dd></div>
+          </dl>
+        </div>
+
+        <div class="ui-card sync-card" id="sync-panel">
+          <div class="ui-card-head">
+            <h2 class="ui-card-title">Sincronización</h2>
+            <span class="ui-meta num" id="offset-val">0.0 s</span>
+          </div>
+          <p id="sync-msg" class="notice hidden"></p>
+          <p class="ui-meta">Si el verso arranca antes o después, apretá el botón justo cuando empieza a cantar, o ajustalo a mano.</p>
+          <button id="sync-btn" class="ui-btn wide">Marcar el primer verso</button>
+          <label class="sr-only" for="offset">Desfase en segundos</label>
+          <input id="offset" type="range" min="-30" max="30" step="0.1" value="0">
+          <div class="range-ends ui-meta num"><span>−30 s</span><span>+30 s</span></div>
+        </div>
+      </aside>
+
+      <section class="ui-card sheet-card" aria-labelledby="sheet-title">
+        <div class="ui-card-head">
+          <h2 class="ui-card-title" id="sheet-title">Letra</h2>
+          <span class="ui-meta"><span class="num" id="solved-count">0</span> de <span class="num" id="line-total-2">0</span> resueltos</span>
+        </div>
+        <ol id="sheet" class="ui-sheet sheet"></ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot ui-meta">Letras de <a href="https://lrclib.net" target="_blank" rel="noopener">LRCLIB</a> · Video con el reproductor oficial de YouTube</footer>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Song Dictation — escuchá un verso, escribí lo que oís</title>
+  <meta name="description" content="Song Dictation pausa cada verso de una canción en inglés y te marca, palabra por palabra, lo que entendiste. Gratis, con cualquier video de YouTube.">
+  <script>
+    // Los links compartidos de la app (?lrc=…&v=…) siguen funcionando
+    if (location.search.includes('lrc=')) location.replace('app.html' + location.search);
+    document.documentElement.classList.add('js');
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 fill=%22%23ffe927%22/><rect x=%226%22 y=%2219%22 width=%2220%22 height=%225%22 fill=%22%23191919%22/></svg>">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="wordmark" href="./">song dictation</a>
+    <nav class="nav-links" aria-label="Secciones">
+      <a href="#probar">Probalo</a>
+      <a href="#hace">Qué hace</a>
+      <a href="#como">Cómo funciona</a>
+    </nav>
+    <a class="btn" href="app.html">Abrir la app</a>
+  </header>
+
+  <main>
+    <!-- Hero: titular gritado, foto que sube -->
+    <section class="hero">
+      <h1 class="shout" aria-label="Escuchá. Escribí.">
+        <span class="line"><span>escuchá.</span></span>
+        <span class="line"><span>escribí.</span></span>
+      </h1>
+      <p class="hero-sentence">Song Dictation pausa cada verso de una canción en inglés y te marca, palabra por palabra, lo que entendiste.</p>
+      <figure class="hero-photo">
+        <img src="assets/edison.jpg" width="1100" height="1302" alt="Un hombre mayor sentado junto a un fonógrafo, con la cabeza inclinada, escuchando con atención">
+      </figure>
+      <p class="hero-fact">Gratis, con cualquier video de YouTube. Sin cuenta.</p>
+      <a class="btn big hero-action" href="app.html">Elegir una canción</a>
+    </section>
+
+    <!-- Showcase: la hoja de letra como tablero de salidas; la fila abierta es el ejercicio -->
+    <section class="board-section" id="probar" aria-labelledby="board-title">
+      <div class="try-top">
+        <div class="try-copy" data-reveal>
+          <h2 id="board-title">Probá tu oído.</h2>
+          <p>Nueve frases con las trampas que más confunden a quien habla español. Elegí una, escuchala y escribila: te marca cada palabra igual que la app.</p>
+          <a class="btn" href="app.html">Practicar con una canción</a>
+        </div>
+
+        <!-- Recorte real de la app: la tira de la canción y el panel del verso, a tamaño real -->
+        <div class="app-crop ui" id="frame" data-ui>
+          <div class="ui-strip" id="frag-strip" aria-label="Progreso de las nueve frases"></div>
+          <div class="crop-legend">
+            <p class="ui-meta" id="frag-summary"></p>
+            <div class="ui-legend">
+              <span><i class="done"></i>Resuelta</span>
+              <span><i class="partial"></i>A medias</span>
+              <span><i class="revealed"></i>Revelada</span>
+            </div>
+          </div>
+          <form class="ui-card ui-stage" id="frag-form" autocomplete="off">
+            <div class="ui-stage-head">
+              <h3 class="ui-card-title" id="frag-verse">Frase <span class="num" id="frag-num">4</span> de <span class="num">9</span></h3>
+              <span class="ui-meta">Trampa: <b id="frag-pair">can / can’t</b></span>
+            </div>
+            <p class="finding" id="frag-finding"></p>
+            <div class="ui-listen">
+              <button type="button" class="ui-btn" id="frag-listen">Escuchar frase</button>
+              <button type="button" class="ui-btn" id="frag-slow">Más lento <span class="num ui-faint">0.6×</span></button>
+            </div>
+            <label class="sr-only" for="frag-input">Lo que escuchaste</label>
+            <textarea id="frag-input" class="ui-verse" rows="2" placeholder="Escribí lo que escuchás" spellcheck="false" autocapitalize="off"></textarea>
+            <div id="frag-feedback" aria-live="polite"></div>
+            <div class="ui-actions">
+              <button type="submit" class="ui-btn primary">Revisar</button>
+              <button type="button" class="ui-btn" id="frag-reveal">Ver respuesta</button>
+              <span class="spacer"></span>
+              <button type="button" class="ui-btn text" id="frag-next">Siguiente →</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Las frases como tablero, a escala de página -->
+      <ol class="board" id="board" aria-label="Las nueve frases"></ol>
+      <noscript><p class="board-fallback">Esta prueba necesita JavaScript. En la <a href="app.html">app</a> practicás con el video real.</p></noscript>
+    </section>
+
+    <!-- El error es la lección -->
+    <section class="misheard" aria-labelledby="misheard-title">
+      <div class="misheard-head" data-reveal>
+        <h2 id="misheard-title">Lo que oíste no era.</h2>
+        <p>Cada error te muestra un sonido del inglés que todavía no distinguís. La app te lo marca en rojo, verso por verso, hasta que lo oís.</p>
+      </div>
+      <div class="panels" data-reveal>
+        <article class="panel red w5">
+          <h3>Oíste “liver”.</h3>
+          <p>Era <b>river</b>. Rápido, la r inglesa se parece a una l y el oído las junta.</p>
+        </article>
+        <figure class="panel photo w3">
+          <img src="assets/record-player.jpg" width="900" height="1200" loading="lazy" alt="Un tocadiscos portátil gris con un disco puesto, en un estante">
+        </figure>
+        <article class="panel blue w4">
+          <h3>Oíste “sheep”.</h3>
+          <p>Era <b>ship</b>. La i corta del inglés no existe en español, y suena a la larga.</p>
+        </article>
+        <figure class="panel photo w4">
+          <img src="assets/records.jpg" width="1200" height="797" loading="lazy" alt="Cajones de discos de vinilo en una disquería">
+        </figure>
+        <article class="panel yellow w4">
+          <h3>Oíste “thirty”.</h3>
+          <p>Era <b>thirteen</b>. El acento cae al final, thir-TEEN, y eso cambia el número.</p>
+        </article>
+        <article class="panel teal w4">
+          <h3>Oíste “berry”.</h3>
+          <p>Era <b>very</b>. En español la b y la v suenan igual; en inglés, no.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Qué hace: capacidades a escala de cartel -->
+    <section class="does" id="hace" aria-labelledby="does-title">
+      <ul class="does-list" data-reveal>
+        <li class="does-title"><h2 id="does-title">Lo que hace</h2></li>
+        <li><h3>Pausa sola</h3><p>Reproduce solo el verso que toca y se detiene al final, con un cuarto de segundo de cola para no cortar la última sílaba.</p></li>
+        <li><h3>Más lento</h3><p>El mismo verso a 0.75x cuando una palabra se te escapa.</p></li>
+        <li><h3>Marca cada palabra</h3><p>Verde lo que acertaste, rojo lo que faltó, tachado lo que sobró. No cuenta mayúsculas ni comas.</p></li>
+        <li><h3>Tres niveles</h3><p>Una palabra de cada cuatro, la mitad del verso o el verso entero.</p></li>
+        <li><h3>Pistas</h3><p>Primero la forma de cada palabra, después una letra más. Cada pista cuesta dos puntos.</p></li>
+        <li><h3>La letra se destapa</h3><p>Cada verso empieza tapado y aparece cuando lo escribís bien. Ves cuánto de la canción ya es tuyo.</p></li>
+      </ul>
+    </section>
+
+    <!-- Foto a sangre con bloque de leyenda -->
+    <section class="band" aria-labelledby="band-title">
+      <div class="band-photo">
+        <img src="assets/radio-group.jpg" width="2000" height="1604" loading="lazy" alt="Tres hombres de traje sentados en una sala, escuchando en silencio una radio de mueble">
+      </div>
+      <div class="band-caption" data-reveal>
+        <h2 id="band-title">Escuchar se entrena.</h2>
+        <p>Entender una canción no es talento: es oído, y el oído mejora con repetición. Un verso por vez.</p>
+        <p class="small">Grupo escuchando la radio, entre 1909 y 1923.</p>
+      </div>
+    </section>
+
+    <!-- Cómo funciona: líneas en escalera -->
+    <section class="steps" id="como" aria-labelledby="steps-title">
+      <ol class="stair" data-reveal>
+        <li class="s1"><h2 id="steps-title">Primero buscás la canción.</h2><p>Por nombre y artista. Traemos la letra con el tiempo exacto de cada verso.</p></li>
+        <li class="s2"><h3>Después pegás el video.</h3><p>Cualquier link de YouTube. Mejor el audio oficial, que no trae intro.</p></li>
+        <li class="s3"><h3>Escuchás un verso.</h3><p>La app lo reproduce y se calla. Repetilo las veces que quieras, o más lento.</p></li>
+        <li class="s4"><h3>Y escribís lo que oíste.</h3><p>Verde lo que acertaste, rojo lo que se te escapó. Enter, y al siguiente.</p></li>
+      </ol>
+      <figure class="cutout" data-reveal>
+        <img src="assets/radio-women.jpg" width="1100" height="1056" loading="lazy" alt="Dos mujeres sentadas en una sala de los años cincuenta escuchando la radio">
+      </figure>
+    </section>
+
+    <!-- CTA: una palabra es el botón -->
+    <a class="cta" href="app.html">
+      <span class="cta-top">
+        <span class="cta-note">Abrí la app, elegí una canción y arrancá por el primer verso. Gratis y sin cuenta.</span>
+        <svg class="cta-arrow" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><path d="M12 36 36 12M16 12h20v20" fill="none" stroke="currentColor" stroke-width="5"/></svg>
+      </span>
+      <span class="cta-word">practicá</span>
+    </a>
+  </main>
+
+  <!-- Footer: el nombre construido con bloques -->
+  <footer class="foot">
+    <div class="blocks" aria-label="song dictation" role="img"></div>
+    <div class="foot-cols">
+      <div><h2>La app</h2><a href="app.html">Abrir la app</a><a href="#probar">Probar tu oído</a></div>
+      <div><h2>Esta página</h2><a href="#hace">Qué hace</a><a href="#como">Cómo funciona</a></div>
+      <div><h2>Fuentes</h2><a href="https://lrclib.net" target="_blank" rel="noopener">Letras: LRCLIB</a><a href="https://developers.google.com/youtube/iframe_api_reference" target="_blank" rel="noopener">Video: reproductor de YouTube</a></div>
+      <p class="credits">Imágenes: <a href="https://commons.wikimedia.org/wiki/File:Thomas_Edison_listening_to_phonograph._(54ba9d1e9ee749f9ae56518fa526d787).jpg">“Thomas Edison listening to phonograph”</a>, Underwood &amp; Underwood, <a href="https://creativecommons.org/publicdomain/mark/1.0/">dominio público</a>; <a href="https://commons.wikimedia.org/wiki/File:Group_listening_to_radio_LCCN2016820418.jpg">“Group listening to radio”</a>, National Photo Company Collection, <a href="https://creativecommons.org/publicdomain/mark/1.0/">dominio público</a>; <a href="https://commons.wikimedia.org/wiki/File:Women_listening_radio_1950s_Finland.jpg">“Women listening radio 1950s Finland”</a>, <a href="https://creativecommons.org/publicdomain/mark/1.0/">dominio público</a>; <a href="https://commons.wikimedia.org/wiki/File:Vinyl_collection_at_a_record_store_(Unsplash).jpg">“Vinyl collection at a record store”</a>, Mr Cup / Fabien Barral, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>; <a href="https://commons.wikimedia.org/wiki/File:Portable_Philips_LP-_record_player.jpg">“Portable Philips LP record player”</a>, Amitbalani, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>. Todas vía Wikimedia Commons, en blanco y negro.</p>
+    </div>
+    <div class="foot-last">
+      <p>© 2026 Song Dictation</p>
+      <a class="btn small" href="app.html">Abrir la app</a>
+    </div>
+  </footer>
+
+  <script src="landing.js"></script>
+</body>
+</html>

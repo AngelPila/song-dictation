@@ -1,0 +1,183 @@
+/*
+  Componentes de la app, compartidos con la landing (fragmentos data-ui).
+  Estilo: True-black flat (taste-skill --app, seed 1749867252), con la marca de la landing:
+  - elevación solo por luminosidad: #000 fondo, #111 tarjeta, #2a2a2a panel anidado; sin sombras
+  - el primario es una píldora blanca invertida; el acento nunca toca botones, tabs ni nav
+  - un solo tono de datos: el amarillo de la marca, en los versos resueltos y el verso actual
+  - verde azulado (bien) y rojo (falta) de la marca, aclarados para 4.5:1 sobre negro
+  - Cabinet Grotesk para el texto; JetBrains Mono solo para las cifras (Cabinet no tiene tabulares)
+*/
+.ui {
+  --ground: #000000;
+  --surface: #111111;
+  --raised: #2a2a2a;
+  --active: #222222;
+  --border: #1a1a1a;
+  --rule: #1f1f1f;
+  --control: #444444;
+  --text: #ffffff;
+  --muted: #b4b4b4;
+  --faint: #949494;
+  --primary: #ffffff;
+  --primary-ink: #000000;
+  --accent: #ffe927;
+  --positive: #3cc9a8;  --pill-positive-bg: #0f2a23;  --pill-positive-ink: #3cc9a8;
+  --negative: #ff6b5e;  --pill-negative-bg: #2e1412;  --pill-negative-ink: #ff6b5e;
+
+  --font: "Cabinet Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, monospace;
+  --fs-title: 20px;  --fs-section: 16px;  --fs-kpi: 24px;  --fs-body: 15px;  --fs-small: 13px;  --fs-verse: 28px;
+
+  --radius-card: 16px;  --radius-panel: 12px;  --radius-pill: 999px;
+  --gap: 16px;  --card-pad: 20px;
+  --control-height: 36px;  --row-height: 44px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ui { background: var(--ground); color: var(--text); font: 400 var(--fs-body)/1.5 var(--font); font-variant-numeric: tabular-nums; }
+.ui .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 0.92em; letter-spacing: -0.01em; }
+.ui-card { background: var(--surface); border-radius: var(--radius-card); padding: var(--card-pad); min-width: 0; }
+.ui-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.ui-card-title { margin: 0; font-size: var(--fs-section); font-weight: 600; letter-spacing: 0; line-height: 1.3; }
+.ui-meta { color: var(--muted); font-size: var(--fs-small); }
+.ui-faint { color: var(--faint); }
+
+/* ---------- Controles: una altura, píldoras ---------- */
+.ui-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--control-height); padding: 0 16px;
+  border-radius: var(--radius-pill);
+  font: 600 14px/1 var(--font);
+  text-decoration: none; white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--control); background: transparent; color: var(--text);
+  transition: background 120ms var(--ease), border-color 120ms var(--ease), transform 120ms var(--ease);
+}
+.ui-btn:hover { border-color: var(--faint); background: var(--active); }
+.ui-btn:active { transform: scale(0.97); }
+.ui-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.ui-btn.primary { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.ui-btn.primary:hover { background: #e6e6e6; }
+.ui-btn.text { border-color: transparent; padding: 0 10px; }
+.ui-btn.text:hover { background: var(--active); }
+.ui-btn:disabled { color: var(--faint); border-color: var(--raised); cursor: not-allowed; background: transparent; transform: none; }
+.ui-btn .cost { font: 500 12px var(--font-num); color: var(--faint); }
+.ui-btn.primary .cost { color: #555; }
+
+.ui-input {
+  height: 40px; width: 100%;
+  padding: 0 14px;
+  background: var(--ground); color: var(--text);
+  border: 1px solid var(--control); border-radius: var(--radius-panel);
+  font: 400 var(--fs-body) var(--font);
+}
+.ui-input::placeholder { color: var(--faint); }
+.ui-input:focus { outline: none; border-color: var(--text); }
+.ui-label { display: block; font-size: 14px; font-weight: 500; margin: 0 0 8px; }
+
+kbd.ui-kbd { font: 500 12px var(--font-num); color: var(--faint); border: 1px solid var(--control); border-radius: 4px; padding: 0 5px; }
+
+/* ---------- Pastillas de estado: tono pálido, texto del mismo tono ---------- */
+.ui-pill {
+  flex: none; display: inline-flex; align-items: center;
+  height: 22px; padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+  background: var(--raised); color: var(--muted);
+}
+.ui-pill.pos { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+.ui-pill.neg { background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+
+/* ---------- Tira de versos: la canción entera, un segmento por verso ---------- */
+.ui-strip { display: flex; gap: 2px; height: 14px; }
+.ui-strip button {
+  flex: 1; min-width: 3px; padding: 0; border: 0; border-radius: 2px;
+  background: var(--raised); cursor: pointer;
+  transition: transform 120ms var(--ease);
+}
+.ui-strip button:hover { transform: scaleY(1.35); }
+.ui-strip .done { background: var(--accent); }
+.ui-strip .partial { background: #6a6a6a; }
+.ui-strip .revealed { background: repeating-linear-gradient(135deg, #6a6a6a 0 2px, var(--raised) 2px 4px); } /* taste-skill-ignore: rayado de la marca "revelado", no un degradado */
+.ui-strip .current { outline: 2px solid var(--text); outline-offset: 1px; }
+.ui-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: var(--fs-small); color: var(--muted); }
+.ui-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ui-legend i { width: 10px; height: 10px; border-radius: 2px; background: var(--raised); display: inline-block; }
+.ui-legend i.done { background: var(--accent); }
+.ui-legend i.partial { background: #6a6a6a; }
+.ui-legend i.revealed { background: repeating-linear-gradient(135deg, #6a6a6a 0 2px, var(--raised) 2px 4px); } /* taste-skill-ignore: misma marca que en la tira */
+
+/* ---------- Escenario: el verso que toca ---------- */
+.ui-stage { display: flex; flex-direction: column; gap: 18px; }
+.ui-stage-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.ui-listen { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ui-listen .ui-btn.playing { border-color: var(--text); }
+.ui-verse { font: 500 var(--fs-verse)/1.35 var(--font); letter-spacing: -0.01em; }
+textarea.ui-verse, input.ui-verse {
+  width: 100%; resize: none;
+  background: var(--ground); color: var(--text);
+  border: 1px solid var(--control); border-radius: var(--radius-panel);
+  padding: 14px 16px;
+}
+textarea.ui-verse:focus, input.ui-verse:focus { outline: none; border-color: var(--text); }
+textarea.ui-verse::placeholder, input.ui-verse::placeholder { color: var(--faint); }
+.ui-gaps { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.ui-gaps input {
+  font: inherit; color: var(--text);
+  background: transparent;
+  border: 0; border-bottom: 2px solid var(--control); border-radius: 0;
+  padding: 0 4px 2px; text-align: center; min-width: 2.2ch;
+}
+.ui-gaps input:focus { outline: none; border-bottom-color: var(--text); }
+.ui-gaps input.ok { color: var(--positive); border-bottom-color: var(--positive); }
+.ui-gaps input.bad { color: var(--negative); border-bottom-color: var(--negative); animation: ui-shake 300ms var(--ease); }
+@keyframes ui-shake { 25% { transform: translateX(-6px); } 60% { transform: translateX(4px); } }
+
+.ui-marks { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; }
+.ui-mark { padding: 4px 10px; border-radius: 8px; font-size: 16px; font-weight: 500; background: var(--raised); }
+.ui-mark.ok { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+.ui-mark.miss { background: var(--pill-negative-bg); color: var(--pill-negative-ink); font-family: var(--font-num); }
+.ui-mark.extra { background: transparent; color: var(--faint); text-decoration: line-through; }
+.ui-mark.hint { font-family: var(--font-num); letter-spacing: 0.04em; color: var(--text); }
+.ui-verdict { margin: 0; color: var(--muted); }
+.ui-verdict.good { color: var(--positive); font-weight: 600; }
+.ui-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ui-actions .spacer { flex: 1; }
+
+/* ---------- Hoja de letra: filas, el verso actual marcado con el tono de datos ---------- */
+.ui-sheet { list-style: none; margin: 0; padding: 0; }
+.ui-sheet li {
+  display: grid; grid-template-columns: 2.4em 1fr auto 86px; align-items: center; column-gap: 14px;
+  min-height: var(--row-height); padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ui-sheet li + li { box-shadow: inset 0 1px 0 var(--rule); } /* taste-skill-ignore: regla de fila de 1px, permitida en listas de app */
+.ui-sheet li:hover { background: var(--active); }
+.ui-sheet li.current, .ui-sheet li.current + li { box-shadow: none; } /* taste-skill-ignore: quita la regla junto a la fila actual */
+.ui-sheet li.current { background: var(--raised); }
+.ui-sheet .n { font: 500 12px var(--font-num); color: var(--faint); text-align: right; }
+.ui-sheet .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-sheet .bars { display: flex; gap: 5px; align-items: center; overflow: hidden; }
+.ui-sheet .bars i { flex: none; height: 7px; border-radius: 4px; background: var(--raised); }
+.ui-sheet li.current .bars i { background: var(--accent); }
+.ui-sheet li.current .n { color: var(--text); }
+.ui-sheet .t { color: var(--faint); text-align: right; }
+.ui-sheet .s { justify-self: end; }
+.ui-sheet .dash { color: var(--faint); }
+
+/* ---------- KPIs: un contenedor dividido, etiqueta sobre valor ---------- */
+.ui-kpis { display: grid; grid-template-columns: repeat(3, 1fr); }
+.ui-kpis > div { padding: 2px 16px; }
+.ui-kpis > div:first-child { padding-left: 0; }
+.ui-kpis > div + div { box-shadow: inset 1px 0 0 var(--raised); } /* taste-skill-ignore: divisor de 1px del contenedor de KPIs */
+.ui-kpis dt { font-size: var(--fs-small); color: var(--muted); }
+.ui-kpis dd { margin: 4px 0 0; font: 500 var(--fs-kpi)/1.1 var(--font-num); font-variant-numeric: tabular-nums; }
+.ui-kpis dd small { font: 400 13px var(--font); color: var(--faint); margin-left: 2px; }
+
+/* El atajo font: reinicia font-variant-numeric; las cifras lo vuelven a pedir */
+.ui .num, .ui .ui-sheet .n, .ui .ui-sheet .t, .ui .ui-kpis dd, .ui .ui-btn .cost, .ui kbd.ui-kbd, .ui .ui-mark, .ui .ui-pill, .ui .ui-btn { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui *, .ui *::before, .ui *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,4 @@
+.env
+.taste-skill/
+.playwright-mcp/
+node_modules/
