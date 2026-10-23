@@ -12,6 +12,9 @@ const CACHE_FILE = process.env.CACHE_FILE || '/data/cache.json';
 const SEARCH_TTL = 30 * 24 * 3600 * 1000; // una búsqueda cuesta 100 unidades: la guardamos un mes
 const VIDEO_TTL = 90 * 24 * 3600 * 1000;
 const YT = process.env.YT_BASE || 'https://www.googleapis.com/youtube/v3'; // YT_BASE solo para pruebas
+const OEMBED = process.env.OEMBED_BASE || 'https://www.youtube.com/oembed';
+const REGION = (process.env.YT_REGION || 'EC').toUpperCase(); // país desde el que se mira: para los bloqueos regionales
+const PLAYABLE_TTL = 24 * 3600 * 1000; // el dueño puede cambiar el permiso de inserción: lo revisamos una vez por día
 
 // ---------- Caché en memoria, persistida en un archivo ----------
 let cache = {};
@@ -75,15 +78,19 @@ async function videoDetails(ids) {
     const body = await yt('videos', {
       part: 'snippet,contentDetails,status',
       id: missing.join(','),
-      fields: 'items(id,snippet(title,channelTitle),contentDetails(duration),status(embeddable))',
+      fields: 'items(id,snippet(title,channelTitle),contentDetails(duration,regionRestriction,contentRating/ytRating),status(embeddable,privacyStatus))',
     });
     for (const it of body.items || []) {
+      const region = it.contentDetails?.regionRestriction || {};
       const v = {
         id: it.id,
         title: it.snippet?.title || '',
         channel: it.snippet?.channelTitle || '',
         duration: isoSeconds(it.contentDetails?.duration),
         embeddable: it.status?.embeddable !== false,
+        private: it.status?.privacyStatus === 'private',
+        ageRestricted: it.contentDetails?.contentRating?.ytRating === 'ytAgeRestricted',
+        regionBlocked: Boolean((region.blocked || []).includes(REGION) || (region.allowed && !region.allowed.includes(REGION))),
       };
       out[it.id] = v;
       setCached(`v:${it.id}`, v, VIDEO_TTL);
@@ -109,6 +116,51 @@ async function searchSong(track, artist) {
   });
 }
 
+// ¿Se puede reproducir insertado en otra página?
+// oEmbed no pide clave: 401 = el dueño desactivó la inserción, 404/400 = privado, borrado o inexistente.
+// Con clave sumamos lo que oEmbed no dice: restricción por edad y bloqueo en el país (los dos impiden verlo insertado).
+const VERDICT_TEXT = {
+  ok: 'Se puede reproducir acá',
+  embed_disabled: 'El dueño no permite reproducirlo fuera de YouTube',
+  not_found: 'El video no existe, es privado o fue borrado',
+  age_restricted: 'Tiene restricción de edad: YouTube no lo deja ver fuera de su sitio',
+  region_blocked: `No se puede ver desde este país (${REGION})`,
+};
+
+async function oembed(id) {
+  const target = `https://www.youtube.com/watch?v=${id}`;
+  const res = await fetch(`${OEMBED}?${new URLSearchParams({ url: target, format: 'json' })}`, { signal: AbortSignal.timeout(8000) });
+  if (res.status === 401 || res.status === 403) return { verdict: 'embed_disabled' };
+  if (res.status === 404 || res.status === 400) return { verdict: 'not_found' };
+  if (!res.ok) throw new YtError(res.status, 'oembed');
+  const body = await res.json().catch(() => ({}));
+  return { verdict: 'ok', title: body.title || '', channel: body.author_name || '' };
+}
+
+async function playable(id) {
+  const k = `p:${id}`;
+  const hit = getCached(k);
+  if (hit) return hit;
+  return once(k, async () => {
+    const o = await oembed(id);
+    let verdict = o.verdict;
+    let info = { title: o.title || '', channel: o.channel || '', duration: 0 };
+    if (KEY && verdict === 'ok') {
+      const [v] = await videoDetails([id]).catch(() => []);
+      if (v) {
+        info = { title: v.title || info.title, channel: v.channel || info.channel, duration: v.duration };
+        if (!v.embeddable) verdict = 'embed_disabled';
+        else if (v.private) verdict = 'not_found';
+        else if (v.ageRestricted) verdict = 'age_restricted';
+        else if (v.regionBlocked) verdict = 'region_blocked';
+      }
+    }
+    const out = { id, playable: verdict === 'ok', verdict, text: VERDICT_TEXT[verdict], checkedWithKey: Boolean(KEY), ...info };
+    setCached(k, out, PLAYABLE_TTL);
+    return out;
+  });
+}
+
 // ---------- HTTP ----------
 function send(res, status, data) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -130,6 +182,11 @@ const server = http.createServer(async (req, res) => {
       const artist = clean(url.searchParams.get('artist'));
       if (!track) return send(res, 400, { error: 'track' });
       return send(res, 200, await searchSong(track, artist));
+    }
+    if (url.pathname === '/api/youtube/playable') {
+      const id = url.searchParams.get('id') || '';
+      if (!/^[\w-]{11}$/.test(id)) return send(res, 400, { error: 'id' });
+      return send(res, 200, await playable(id));
     }
     if (url.pathname === '/api/youtube/video') {
       if (!KEY) return send(res, 503, { error: 'no_key' });

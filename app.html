@@ -84,6 +84,7 @@
           <div class="yt-info">
             <b id="yt-title"></b>
             <span class="ui-meta" id="yt-meta"></span>
+            <span class="yt-playable" id="yt-playable" aria-live="polite"></span>
           </div>
         </div>
         <p id="yt-status" class="yt-status" role="status"></p>
@@ -184,6 +185,10 @@
 
       <div class="ui-card video-card">
         <div class="player-wrap"><div id="player"></div></div>
+        <div id="video-error" class="video-error hidden" role="alert">
+          <p id="video-error-text"></p>
+          <button type="button" class="ui-btn" id="video-error-btn">Elegir otro video</button>
+        </div>
       </div>
 
       <aside class="side">

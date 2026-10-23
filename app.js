@@ -332,6 +332,7 @@ Object.assign(state, {
   videoQuery: '',
   searching: false,
   searched: false,   // ya hubo al menos una búsqueda en esta visita
+  playable: {},      // id → { status: 'checking' | 'ok' | 'bad' | 'unknown', text }
 });
 
 const currentVideo = () => state.manualVideo || state.autoVideo;
@@ -556,6 +557,27 @@ async function checkYouTube() {
   renderVideo();
 }
 
+// ¿Se puede reproducir fuera de YouTube? Lo responde el servicio api (oEmbed, y con clave también edad y país)
+async function checkPlayable(id) {
+  const known = state.playable[id];
+  if (known && known.status !== 'unknown') return known;
+  state.playable[id] = { status: 'checking', text: 'Verificando que se pueda reproducir acá…' };
+  let out;
+  try {
+    const r = await apiGet(`/api/youtube/playable?id=${id}`);
+    out = r.ok
+      ? { status: r.body.playable ? 'ok' : 'bad', text: r.body.text }
+      : { status: 'unknown', text: 'No se pudo verificar ahora; se prueba al reproducir.' };
+  } catch {
+    out = { status: 'unknown', text: 'No se pudo verificar ahora; se prueba al reproducir.' };
+  }
+  // un error de reproducción real manda sobre lo que se verificó antes
+  if (state.playable[id]?.status !== 'bad' || out.status === 'bad') state.playable[id] = out;
+  return state.playable[id];
+}
+
+const isBad = (v) => state.playable[v.id]?.status === 'bad';
+
 function ytErrorText(body, status) {
   const reason = body?.reason || '';
   if (/quota/i.test(reason)) return 'YouTube no respondió: se agotó la cuota diaria de búsquedas (se renueva a medianoche, hora del Pacífico).';
@@ -586,9 +608,15 @@ async function findVideo(track, artist) {
     return renderVideo();
   }
   const lyrics = relevantLyrics(state.results, track, artist);
-  state.videos = rankVideos(r.body.videos || [], lyrics.length ? lyrics : [state.candidate], track, artist);
+  const ranked = rankVideos(r.body.videos || [], lyrics.length ? lyrics : [state.candidate], track, artist);
+  state.ytStatus = { kind: 'loading', text: 'Verificando que los videos se puedan reproducir acá…' };
+  renderVideo();
+  await Promise.all(ranked.slice(0, 5).map((v) => checkPlayable(v.id)));
+  if (state.videoQuery !== query) return;
+  state.videos = ranked.filter((v) => !isBad(v));
+  const dropped = ranked.length - state.videos.length;
   state.ytStatus = state.videos.length ? null
-    : { kind: 'empty', text: 'YouTube no devolvió videos que se puedan ver acá. Pegá un link abajo.' };
+    : { kind: 'empty', text: `${dropped ? 'Ninguno de los videos encontrados se puede reproducir fuera de YouTube.' : 'YouTube no devolvió videos que se puedan ver acá.'} Pegá un link abajo.` };
   pickBestPair();
 }
 
@@ -617,6 +645,7 @@ function renderVideo() {
     $('yt-meta').innerHTML = `${parts.join(' · ')}${diff !== null ? ` ${durationPill(diff)}` : ''}`;
   }
   $('yt-source').textContent = !video ? '' : state.manualVideo ? 'Pegado a mano' : 'Propuesto';
+  renderPlayable(video);
 
   const st = $('yt-status');
   let text = '', kind = '';
@@ -633,7 +662,7 @@ function renderVideo() {
   st.className = `yt-status ${kind}`;
 
   // alternativas: las 3 siguientes de la lista, sin repetir la elegida
-  const alts = state.manualVideo ? [] : state.videos.filter((v) => v !== state.autoVideo).slice(0, 3);
+  const alts = state.manualVideo ? [] : state.videos.filter((v) => v !== state.autoVideo && !isBad(v)).slice(0, 3);
   $('yt-alts-wrap').classList.toggle('hidden', !alts.length);
   const ul = $('yt-alts');
   ul.innerHTML = '';
@@ -671,8 +700,25 @@ $('yt-url').addEventListener('input', () => {
   }
 });
 
+function renderPlayable(video) {
+  const el = $('yt-playable');
+  if (!video) { el.textContent = ''; return; }
+  const p = state.playable[video.id];
+  if (!p) {
+    checkPlayable(video.id).then(() => { if (currentVideo()?.id === video.id) renderVideo(); });
+    el.className = 'yt-playable checking';
+    el.textContent = 'Verificando que se pueda reproducir acá…';
+    return;
+  }
+  el.className = `yt-playable ${p.status}`;
+  el.innerHTML = p.status === 'ok' ? `<span class="ui-pill pos">${esc(p.text)}</span>`
+    : p.status === 'bad' ? `${esc(p.text)}. ${state.manualVideo ? 'Pegá otro link.' : 'Elegí otra opción.'}`
+    : esc(p.text);
+}
+
 function updateStartButton() {
-  $('start-btn').disabled = !(state.candidate && currentVideo());
+  const video = currentVideo();
+  $('start-btn').disabled = !(state.candidate && video) || state.playable[video.id]?.status === 'bad';
   $('setup-msg').textContent = '';
 }
 
@@ -720,6 +766,7 @@ async function startPractice(lrcItem, videoId) {
   renderPoints();
   saveProgress();
 
+  $('video-error').classList.add('hidden');
   await ytReady;
   if (state.player) {
     state.captionsOff = false;
@@ -757,13 +804,33 @@ function checkDuration() {
 
 function onPlayerError(e) {
   const msgs = {
-    2: 'El link de YouTube no es válido. Volvé a Canciones y pegalo de nuevo.',
-    100: 'El video no existe o es privado. Probá con otro video de la canción.',
-    101: 'El dueño del video no permite reproducirlo fuera de YouTube. Probá con otro video de la canción.',
-    150: 'El dueño del video no permite reproducirlo fuera de YouTube. Probá con otro video de la canción.',
+    2: 'El link de YouTube no es válido.',
+    5: 'Este video no se puede reproducir en el navegador.',
+    100: 'El video no existe, es privado o fue borrado.',
+    101: 'El dueño del video no permite reproducirlo fuera de YouTube.',
+    150: 'El dueño del video no permite reproducirlo fuera de YouTube.',
   };
-  showSyncMsg(msgs[e.data] || `El reproductor falló (error ${e.data}). Recargá la página.`);
+  const text = msgs[e.data] || `El reproductor falló (error ${e.data}).`;
+  // lo anotamos para que en Canciones no se vuelva a proponer ni se pueda empezar con él
+  if ([2, 100, 101, 150].includes(e.data)) state.playable[state.videoId] = { status: 'bad', text: text.replace(/\.$/, '') };
+  $('video-error-text').textContent = `${text} Tu progreso queda guardado; elegí otro video de la misma canción.`;
+  $('video-error').classList.remove('hidden');
 }
+
+$('video-error-btn').addEventListener('click', () => {
+  // si se llegó por un link o desde "Seguir", dejamos buscada la canción para elegir otro video
+  if (!state.candidate && state.song) {
+    $('q-track').value = state.song.trackName;
+    $('q-artist').value = state.song.artistName;
+    backToSetup();
+    $('search-form').requestSubmit();
+    return;
+  }
+  if (state.manualVideo?.id === state.videoId) { state.manualVideo = null; $('yt-url').value = ''; }
+  if (state.autoVideo?.id === state.videoId) pickBestPair(state.videos.find((v) => !isBad(v)));
+  backToSetup();
+  renderChosen();
+});
 
 function setOffset(v) {
   state.offset = Math.round(v * 10) / 10;

@@ -91,6 +91,12 @@ h1, h2, p { margin: 0; }
 .yt-info b { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .yt-info .ui-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .yt-status { font-size: var(--fs-small); color: var(--muted); margin: 10px 0 0; }
+.yt-playable { display: flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--muted); }
+.yt-playable:empty { display: none; }
+.yt-playable.bad { color: var(--negative); }
+.yt-playable.unknown { color: var(--faint); }
+.yt-playable.checking::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: yt-pulse 1s var(--ease) infinite alternate; }
+.video-error { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--pill-negative-bg); color: var(--pill-negative-ink); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; font-size: var(--fs-small); }
 .yt-status:empty { display: none; }
 .yt-status.off, .yt-status.idle { color: var(--faint); }
 .yt-status.error { color: var(--negative); }
