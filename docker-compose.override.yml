@@ -1,0 +1,5 @@
+# Solo para correrlo en tu máquina: docker compose lo suma solo. Coolify enruta por dominio y no lo usa.
+services:
+  web:
+    ports:
+      - "8080:80"

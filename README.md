@@ -30,3 +30,7 @@ La cuota gratuita es de 10.000 unidades por día: cada canción nueva cuesta 101
 - Gana el video cuya duración está más cerca de alguna versión de la letra (±3 s cuenta como "coincide"); suman el audio oficial, los canales "- Topic"/VEVO y los lyric videos; restan los videoclips (suelen tener intro) y descartan en la práctica los en vivo, covers, karaoke, remixes, etc.
 - Entre las versiones de LRCLIB con tiempos se elige la de duración más cercana al video. Si el usuario toca otra versión o pega otro link, manda su elección.
 - Las búsquedas de LRCLIB se guardan 7 días en el navegador (`sd:lrcq`) y se hacen solo al enviar el formulario.
+
+## Deploy (Coolify)
+
+Recurso de tipo Docker Compose desde este repo, archivo `docker-compose.yml`. Asigná el dominio al servicio `web` (puerto 80). La clave de YouTube va como variable de entorno `YOUTUBE_API_KEY` del recurso; sin ella la app funciona pegando el link. `docker-compose.override.yml` es solo para correrlo local en el puerto 8080.
